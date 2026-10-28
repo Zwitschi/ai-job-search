@@ -35,6 +35,10 @@ Every grant the template ships, where it lives, how long it lasts, and what chec
 | Personal-data ignore rules (`.gitignore`) | Every rule in `REQUIRED_IGNORE_RULES` present, read as git reads them (leading whitespace is part of the pattern); no negation outside `ALLOWED_IGNORE_NEGATIONS`, in the root file or in any subdirectory `.gitignore`, which outranks it | - | Fails CI |
 | The browser-header retry (`tools/fetch_page.py`) | A GET with a fixed argv, http(s) only, 45 s / 5 redirects / 10 MB, `robots.txt` enforced before each redirect target with no bypass flag, output refused inside the repo | - | Pinned by `tests/test_fetch_page.py`; the grant names the script, not `curl` |
 
+### Using agent CLIs other than Claude Code
+
+`AGENTS.md` and `.agents/skills/job-application-workflow/SKILL.md` carry the provider-neutral rules. The permissions in `.claude/settings.json` are **not** inherited by Codex, pi, Gemini CLI, or other tools. Each CLI has its own file, shell, browser, and approval controls; configure and review those separately. If a CLI cannot run the posting gate, access the posting safely, or inspect a compiled PDF, the workflow must report the missing check and stop or offer a manual alternative rather than silently bypassing it. External actions (submitting applications, sending messages, publishing data) still require explicit user approval.
+
 ### What this does not do
 
 - **It is not a sandbox.** Claude Code's Bash sandbox does not run on native Windows at all, and on macOS and Linux it is off by default. If you are on macOS or Linux, turning it on in your user settings is the single strongest addition you can make; nothing in this repo conflicts with it.

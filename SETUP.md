@@ -4,15 +4,13 @@ Step-by-step instructions for getting the AI Job Search framework running.
 
 ## 1. Prerequisites
 
-### Claude Code
+### Agent CLI (provider choice)
 
-Install Claude Code (Anthropic's CLI for Claude):
+Claude Code is optional. This repository also works with compatible coding-agent CLIs such as Codex, pi, or Gemini CLI when they can read repository files, edit/write files, run local commands, and (for live searches) use web search/fetch tools. Start the agent in the repository root so it can read `AGENTS.md` and discover `.agents/skills/`.
 
-```bash
-npm install -g @anthropic-ai/claude-code
-```
+In Claude Code, `/setup`, `/scrape`, and the other slash commands are available as shortcuts. In other CLIs, ask for the task in ordinary language and point the agent to `AGENTS.md` and `.agents/skills/job-application-workflow/SKILL.md`. The agent must translate tool names to its own capabilities; if it lacks browsing or subagents, it should say so and use the documented manual fallback rather than pretending those steps ran.
 
-You'll need an Anthropic API key or a Claude Pro/Team subscription. See the [Claude Code docs](https://docs.anthropic.com/en/docs/claude-code) for details.
+Install and authenticate with the provider CLI of your choice using that provider's official instructions. This repository does not require Anthropic credentials unless you choose Claude Code.
 
 ### Python
 
@@ -153,7 +151,7 @@ Push-Location $SmokeDir; xelatex -interaction=nonstopmode -halt-on-error cover_s
 
 ### Optional: ATS text extraction (pypdf, then pdftotext)
 
-`/apply` runs an ATS parseability check on the compiled CV: it extracts the PDF's text layer and verifies contact details, reading order, and keyword coverage the way an applicant-tracking system sees them.
+The application workflow runs an ATS parseability check on the compiled CV: it extracts the PDF's text layer and verifies contact details, reading order, and keyword coverage the way an applicant-tracking system sees them.
 
 The default extractor is **pypdf** (BSD, `pip install pypdf`). Poppler `pdftotext` remains an optional fallback:
 
@@ -204,25 +202,19 @@ If you're outside Denmark, you can generate an equivalent search skill for your 
 
 ## 4. Run the setup interview
 
-Start Claude Code in the repository:
+Start your chosen agent CLI from the repository root. In Claude Code, run `/setup`. In another compatible CLI, send this request:
 
-```bash
-claude
+```text
+Read AGENTS.md and .agents/skills/job-application-workflow/SKILL.md, then run profile setup from my documents folder. Ask me to confirm missing or conflicting details before editing anything.
 ```
 
-Then run the onboarding:
+The setup workflow offers three paths:
 
-```
-/setup
-```
-
-Claude will offer three paths:
-
-- **Path A (documents folder):** Add your CV, LinkedIn export, diplomas, references, or past applications under `documents/`. Claude reads and cross-references them before proposing profile updates. This is best when you have several source files.
-- **Path B (single CV import):** Share one CV/resume by mentioning the file with `@` or pasting the text. Claude extracts it and asks follow-up questions for anything missing.
+- **Path A (documents folder):** Add your CV, LinkedIn export, diplomas, references, or past applications under `documents/`. The agent reads and cross-references them before proposing profile updates. This is best when you have several source files.
+- **Path B (single CV import):** Provide one CV/resume through the CLI's file-reference syntax or paste the text. The agent extracts it and asks follow-up questions for anything missing.
 - **Path C (interview mode):** Answer structured interview questions section by section.
 
-All three paths produce the same result: fully populated profile files.
+All three paths update the same profile files. Missing or conflicting information stays marked for confirmation; the agent must not invent details.
 
 ### What gets populated
 
@@ -241,13 +233,7 @@ All three paths produce the same result: fully populated profile files.
 
 You can update specific sections later:
 
-```
-/setup --section skills
-/setup --section experience
-/setup --section search
-```
-
-The `--section search` option is especially useful as your priorities evolve. It re-runs the search configuration interview and suggests role types you may not have considered based on your full profile.
+In Claude Code, use `/setup --section skills`, `/setup --section experience`, or `/setup --section search`. In other CLIs, request the same section by name, for example: “Update only my search preferences using the setup workflow.” The search-only update is useful as priorities evolve.
 
 ## 5. Optional: Set up salary benchmarking
 
@@ -264,24 +250,13 @@ This creates `salary_data.json` which the `/apply` workflow uses for salary benc
 
 ## 6. Test the workflow
 
-Find a job posting you're interested in, then:
+Find a posting and ask your agent to evaluate and apply to it. In Claude Code, use `/apply <posting URL>`. In another CLI, ask:
 
-```
-/apply https://jobindex.dk/job/1234567
-```
-
-Or paste the job description directly:
-
-```
-/apply [paste job posting text here]
+```text
+Read AGENTS.md and the job-application-workflow skill. Evaluate this posting against my profile, show me the fit and gaps, and wait for approval before drafting: <posting URL>
 ```
 
-Claude will:
-1. Evaluate the fit against your profile
-2. Ask if you want to proceed
-3. Draft a tailored CV and cover letter
-4. Have a reviewer agent critique the drafts
-5. Revise and present the final output
+If the posting cannot be fetched, paste its text. The workflow evaluates fit first, waits for approval, drafts a tailored CV and cover letter, performs a separate review pass (using a subagent if available), then presents the result. It never submits an application.
 
 ## 7. Compile your documents
 

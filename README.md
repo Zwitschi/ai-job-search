@@ -15,9 +15,9 @@
 </p>
 
 <p align="center">
-  An AI-powered job application framework built on <a href="https://claude.com/claude-code">Claude Code</a>.<br>
-  Fork it, fill in your profile, and let Claude evaluate job postings, tailor your CV,<br>
-  write cover letters, and prepare you for interviews.
+  An AI-powered job-search and application framework for coding-agent CLIs.<br>
+  Use Claude Code, Codex, pi, Gemini CLI, or another agent that can read repository instructions<br>
+  and use file, shell, and (optionally) web-search tools.
 </p>
 
 <p align="center">
@@ -62,7 +62,7 @@ Sixty-nine tailored applications, twenty first interviews, and one signed contra
 
 ## What this is
 
-A structured workflow that turns Claude Code into a full-stack job application assistant. Six commands carry you from an empty profile to a tracked result:
+A structured workflow for agent CLIs that turns a candidate profile and job posting into an evaluated, tailored, and tracked application. Claude Code slash commands are included as shortcuts; the core workflows are also exposed through portable Agent Skills and `AGENTS.md`.
 
 <p align="center">
   <img src="assets/readme/route.svg" alt="The workflow in order: /setup builds your profile, /scrape finds new postings, /rank shortlists the fits, /apply tailors a CV and cover letter, /interview preps every round, /outcome tracks each result." width="100%">
@@ -80,7 +80,7 @@ The framework encodes career guidance best practices, including structured evalu
 
 | | |
 |---|---|
-| **[Claude Code](https://claude.com/claude-code)** | The CLI. No free tier: a Claude Pro/Max/Team subscription or Anthropic API credits (pay-per-token, usually cheaper for occasional use). |
+| **An agent CLI** | Claude Code, Codex, pi, Gemini CLI, or another tool that reads `AGENTS.md` / Agent Skills and provides file access. Web search/fetch tools are needed for live research; otherwise paste job postings and use the portal CLIs. |
 | **Python 3.10+** | For the tools in `tools/`. |
 | **[Bun](https://bun.sh)** | Runs the job search CLI tools. |
 | **LaTeX** | A distribution with `lualatex` and `xelatex`: [TeX Live](https://tug.org/texlive/), [MacTeX](https://tug.org/mactex/), [TinyTeX](https://yihui.org/tinytex/), or [MiKTeX](https://miktex.org/). |
@@ -89,7 +89,7 @@ The framework encodes career guidance best practices, including structured evalu
 <details>
 <summary>Fine print: other agents, LaTeX engines, PDF text extraction</summary>
 
-- **Using a different agent tool** (Codex, Antigravity, Gemini CLI)? Start at [`AGENTS.md`](AGENTS.md) - the portal search skills work there out of the box, and [community forks](https://github.com/ai-job-search-dev/ai-job-search/discussions/78) adapt the full workflow.
+- **Using another agent CLI** (Codex, pi, Gemini CLI, etc.)? Start at [`AGENTS.md`](AGENTS.md) and `.agents/skills/job-application-workflow/SKILL.md`. Ask for tasks in ordinary language; Claude Code slash commands are optional shortcuts. Agents still need their own tools and approvals.
 - **LaTeX engines.** The CV compiles with `lualatex` (pdflatex often fails on modern MiKTeX installs with `fontawesome5` font-expansion errors); the cover letter compiles with `xelatex` because `cover.cls` requires `fontspec`. If using a minimal TeX install such as TinyTeX or BasicTeX, install the extra packages listed in [SETUP.md](SETUP.md#minimal-tex-install-tinytexbasictex).
 - **PDF text extraction.** `pypdf` is BSD-licensed and needs no Poppler. Poppler `pdftotext` remains a fallback (macOS: `brew install poppler`, Debian/Ubuntu: `apt install poppler-utils`, Windows: `choco install poppler`). If both are missing, the check degrades to a visual keyword review.
 
@@ -128,42 +128,30 @@ For `linkedin-search` and `freehire-search` the install is optional: both have z
 
 ### 3. Set up your profile
 
-```bash
-claude
-# Then inside Claude Code:
-/setup
+Start your preferred agent CLI **from the repository root**. In Claude Code, run `/setup`. In another compatible CLI, make the equivalent natural-language request, for example:
+
+```text
+Read AGENTS.md and the job-application-workflow skill, then set up my profile from documents/. Ask me to confirm missing or conflicting details before editing.
 ```
 
-`/setup` offers three paths: read your `documents/` folder if you have one populated (CV PDF, LinkedIn export, diplomas, reference letters, past applications), import a single CV pasted in chat, or walk through an interview. It auto-detects what you have and asks. Documents-folder mode is idempotent and safe to re-run as you add more material; see `documents/README.md` for the layout.
+The setup workflow can read your `documents/` folder (CV PDF, LinkedIn export, diplomas, references, past applications), import a single CV, or interview you. It is safe to re-run as you add material; see `documents/README.md` for the layout. Slash commands are Claude Code shortcuts, not a dependency.
 
 ### 4. Search for jobs
 
-```bash
-/scrape
-```
-
-This searches multiple job portals for positions matching your profile, deduplicates results, and presents them sorted by fit. Pick a match to run `/apply` on it directly — or, when a scrape returns more jobs than you want to eyeball, run `/rank` to batch-score them all against the fit framework and get a ranked shortlist first.
+In Claude Code, run `/scrape`. In another CLI, ask: “Use the job-application-workflow skill to search for recent jobs matching my profile.” This searches enabled portal CLIs and available web-search tools, deduplicates results, and presents matches. You can then ask the agent to rank the results or evaluate one posting.
 
 ### 5. Apply to a job
 
-```bash
-/apply https://jobindex.dk/job/1234567
-```
+In Claude Code, use `/apply <posting URL>`. In another CLI, ask: “Read the job-application-workflow skill and evaluate this posting, then prepare an application if I approve: <URL>”. If the URL cannot be fetched, paste the job description instead.
 
-If the URL can't be fetched (some job portals block automated access), you can paste the job description directly instead:
-
-```bash
-/apply <paste the full job description here>
-```
-
-This runs the full workflow: evaluate fit, draft CV + cover letter, review with a second agent, revise, and present the final output. The posting passes a deterministic integrity gate first (hidden text, invisible characters, instruction-shaped lines, hidden links), and its one-line verdict opens the evaluation; the agents that fetch and review read-only.
+The workflow evaluates fit before drafting, runs a deterministic integrity gate on the posting, and reviews the documents before presenting them. It does not submit applications. When the CLI lacks isolated subagents, it performs the review as a separate sequential pass.
 
 > [!WARNING]
 > Postings are treated as untrusted input (the workflow follows no instructions embedded in them and fetches no links from their body), but agentic defenses are instruction-level, not a sandbox - on an unfamiliar job board, skim what was fetched and written before you hit send. Details in [SECURITY.md](SECURITY.md).
 
 ## Commands
 
-`/setup`, `/scrape`, and `/apply` form the core workflow. Ten more commands extend it once your profile is in place.
+The core workflows are profile setup, job search, and applications. The slash commands below are Claude Code shortcuts; in other agent CLIs, request the task in ordinary language or invoke the portable `job-application-workflow` skill.
 
 | Command | What it does |
 |---|---|
@@ -204,14 +192,14 @@ This runs the full workflow: evaluate fit, draft CV + cover letter, review with 
   <img src="assets/readme/apply.svg" alt="A job posting passes an integrity gate and fit evaluation, then loops through draft, review, revise, and compile plus inspect until the CV is exactly two pages, the cover letter one page, and the ATS text layer is checked." width="100%">
 </p>
 
-The `/apply` command runs a **drafter-reviewer workflow** with mandatory PDF compilation:
+The application workflow runs a **drafter-reviewer process** with mandatory PDF compilation:
 
 1. **Parse** the job posting (URL or text)
 2. **Evaluate fit** against your profile (skills, experience, culture, location, career alignment)
 3. **Draft** a tailored CV and cover letter in LaTeX
 4. **Spawn a reviewer agent** that researches the company and critiques the drafts
 5. **Revise** based on the reviewer's feedback
-6. **Compile and inspect** both PDFs: lualatex for the CV, xelatex for the cover letter. Claude reads the rendered pages and iterates on the LaTeX until the CV is exactly 2 pages with no orphaned entry titles, and the cover letter is exactly 1 page with the signature visible and fonts consistent.
+6. **Compile and inspect** both PDFs: lualatex for the CV, xelatex for the cover letter. The agent reads the rendered pages when its CLI supports PDF/image inspection and iterates until the CV is exactly 2 pages with no orphaned entry titles and the cover letter is exactly 1 page with the signature visible and fonts consistent. If visual inspection is unavailable, the agent reports that limitation and asks for a manual check.
 7. **ATS-check the CV**: extract the PDF's text layer (`pdftotext`, optional dependency) and verify it the way an ATS parser sees it — contact details present as literal text, no garbled glyphs, sane reading order — then score the posting's keyword coverage against the extraction. Keywords the profile genuinely supports get added; genuine gaps stay visible, never stuffed.
 8. **Present** the final output with a verification checklist
 
@@ -223,7 +211,7 @@ All claims in the CV and cover letter are verified against your actual profile. 
 - **PDF verification loop.** Most LaTeX-resume templates produce "looks fine in the .tex" output that breaks in the PDF: job titles orphan to the next page, cover letters spill onto page 2, bullet fonts silently fall back to the body font. The `/apply` command compiles and visually inspects every PDF and applies targeted fixes (`\needspace`, `\enlargethispage`, font-matching wrappers for list items) until the layout is clean. This runs automatically on every application.
 - **ATS verification on the PDF text layer.** An ATS reads the PDF's embedded text, not the rendered page — and LaTeX can silently produce PDFs whose text extracts as garbage (icon glyphs where the email should be, interleaved lines from multi-column layouts). `/apply` extracts the compiled CV's text layer with `pdftotext` and verifies contact details, reading order, and the posting's keyword coverage against what a parser actually sees. Honesty rule enforced: a keyword the profile doesn't support is acknowledged as a gap, never stuffed in.
 - **Relevance-weighted CV cutting.** When a CV overflows 2 pages, the workflow does not cut mechanically from the "oldest" section. It scores each candidate line by (a) relevance to the target posting, (b) uniqueness in the document, and (c) whether the cover letter depends on it, and cuts the lowest-total-score line first. An older-role bullet that hits posting keywords survives ahead of a recent-role bullet that does not.
-- **Drafter-reviewer separation.** The drafter writes; a second Claude agent, spawned with a fresh context, researches the company and critiques the drafts. The drafter then revises. This catches missed keywords, weak framing, and generic language that a single pass often leaves in.
+- **Drafter-reviewer separation.** Where supported, a second agent with a fresh context researches the company and critiques the drafts; otherwise the primary agent performs a separate review pass. The drafter then revises. This catches missed keywords, weak framing, and generic language that a single pass often leaves in.
 - **Token-efficient reviewer dispatch.** The reviewer agent receives drafts inline rather than re-reading them, and the verification checklist runs once at the end of the workflow rather than being duplicated by both agents. Note: the new compile-and-inspect step in Step 5 spends some of those savings on PDF rendering and layout iteration — the workflow trades some end-to-end token cost for a real reduction in broken PDFs reaching the user.
 
 </details>
@@ -236,7 +224,7 @@ If you prefer editing files directly instead of using `/setup`:
 
 | File | What to change |
 |------|---------------|
-| `CLAUDE.md` | Your full profile (name, education, experience, skills, goals) |
+| `CLAUDE.md` | Candidate profile (the filename is historical; all supported agents should read it) |
 | `01-candidate-profile.md` | Structured version of your CV data |
 | `02-behavioral-profile.md` | Your behavioral assessment or self-assessment |
 | `04-job-evaluation.md` | Skill match areas, career goals, motivation filters |
@@ -360,7 +348,9 @@ To get the most from this, invest time during `/setup` in describing not just yo
 
 ```
 ai-job-search/
-├── CLAUDE.md                          # Main candidate profile + workflow rules
+├── AGENTS.md                          # Provider-neutral instructions for agent CLIs
+├── CLAUDE.md                          # Candidate profile (filename is historical)
+├── .agents/skills/job-application-workflow/ # Portable workflow router skill
 ├── .claude/
 │   ├── commands/
 │   │   ├── apply.md                   # /apply workflow (drafter-reviewer)
@@ -387,8 +377,8 @@ ai-job-search/
 │   │   │   └── 07-interview-prep.md   # STAR examples + interview framework
 │   │   ├── job-scraper/               # Job search orchestration
 │   │   └── upskill/                   # /upskill skill gap analysis and learning plan
-│   └── settings.json                  # Claude Code permissions (shared, scoped)
-├── .agents/skills/                    # Job portal CLI tools
+│   └── settings.json                  # Claude Code-specific permissions; other CLIs use their own controls
+├── .agents/skills/                    # Portable workflow and job-portal skills
 │   ├── jobbank-search/                # Akademikernes Jobbank (Denmark)
 │   ├── jobdanmark-search/             # Jobdanmark.dk (Denmark)
 │   ├── jobindex-search/               # Jobindex.dk (Denmark)
@@ -443,7 +433,7 @@ Thinking about a PR? Read [CONTRIBUTING.md](CONTRIBUTING.md) first - it explains
 ## Acknowledgements
 
 - [Mikkel Krogholm](https://github.com/mikkelkrogsholm) ([skills repo](https://github.com/mikkelkrogsholm/skills)) for the job search CLI skills
-- Built with [Claude Code](https://claude.com/claude-code) by [Anthropic](https://anthropic.com)
+- The original workflow was built with [Claude Code](https://claude.com/claude-code); provider-neutral instructions and Agent Skills support compatible agent CLIs
 
 ## License
 

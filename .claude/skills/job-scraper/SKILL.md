@@ -60,9 +60,9 @@ If this fails (bun not installed), skip to **1c (WebSearch fallback)** for all p
 
 #### 1b. Run CLI tools (primary — run these in parallel where possible)
 
-Discover all installed portal CLI skills by reading every `SKILL.md` found under `.agents/skills/*/SKILL.md`. Each file documents that portal's exact CLI flags and usage examples. **Use each portal's own documented interface — do not guess flags.** This approach automatically includes any new portals added via `/add-portal` without requiring changes to this file.
+Discover installed **portal CLI** skills under `.agents/skills/`: read each `SKILL.md` only when that skill's folder also contains `cli/src/cli.ts`. Other Agent Skills may live in the same directory and are not job portals; do not try to execute them. Each portal file documents its exact CLI flags and usage examples. **Use the portal's own documented interface — do not guess flags.** This approach automatically includes new portals added via `/add-portal` without requiring changes here.
 
-**Honor the `enabled` toggle.** A portal is enabled unless its `SKILL.md` frontmatter sets `enabled: false` (a missing key means enabled — the default). Skip each disabled portal and record it for the Step 5 summary. A fork can thus keep a portal installed but sit out a run without deleting its directory.
+**Honor the `enabled` toggle.** For a portal skill with a CLI, it is enabled unless its `SKILL.md` frontmatter sets `enabled: false` (a missing key means enabled — the default). Skip each disabled portal and record it for the Step 5 summary. A fork can thus keep a portal installed but sit out a run without deleting its directory.
 
 For each **enabled** portal skill:
 
